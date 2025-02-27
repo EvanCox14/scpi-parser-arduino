@@ -54,7 +54,7 @@ extern "C" {
 #define LINE_ENDING_CRLF        "\r\n"  /*   use <CR><LF> carriage return + line feed as termination charcters */
 
 #ifndef SCPI_LINE_ENDING
-#define SCPI_LINE_ENDING        LINE_ENDING_CRLF
+#define SCPI_LINE_ENDING        LINE_ENDING_LF
 #endif
 
 #ifndef USE_CUSTOM_REGISTERS

@@ -356,6 +356,63 @@ scpi_bool_t compareStr(const char * str1, size_t len1, const char * str2, size_t
     return FALSE;
 }
 
+
+/**
+ * Compare the pattern's non-lowercase letters with the command string.
+ * The short form of a pattern is the non-lowercase chars of the pattern.
+ * This would normally be the first 3 or 4 letters of a mneumonic, according to SCPI.
+ * But the short forms were made non-contiguous (against SCPI spec), so this function had to be added.
+ * @param pattern
+ * @param plen
+ * @param command
+ * @param clen
+ * @return TRUE if pattern non-lowercase chars match the command string
+ */
+scpi_bool_t compareShortPatternToCommand(const char * pattern, size_t plen, const char * command, size_t clen) {
+    // pattern can be longer than cmd, since we're comparing the short form of pattern with cmd.
+    if (plen < clen) {
+        return FALSE;
+    }
+
+    int p_index = 0;
+    int c_index = 0;
+    for (c_index = 0; c_index < clen; c_index++, p_index++) {
+        // search for next non-lowercase letter in pattern
+        while (islower((unsigned char) pattern[p_index]) && p_index < plen) {
+            p_index++;
+        }
+        if (p_index >= plen) {
+            // ran out of chars in pattern
+            return FALSE;
+        }
+
+        // compare 1 char from pattern and command
+        if (0 != SCPIDEFINE_strncasecmp(&pattern[p_index], &command[c_index], 1)) {
+            return FALSE;
+        }
+        // continue to next command char, unless command char is \0
+        if (pattern[p_index] == '\0')
+        {
+            // p_index needs to be incremented because this char was used and break will not trigger the for-increment
+            p_index++;
+            break;
+        }
+    }
+
+    // every command char had a match in pattern that was not lowercase in the correct order.
+    // now check to make sure there are no leftover non-lowercase chars
+    while (islower((unsigned char) pattern[p_index]) && p_index < plen && pattern[p_index] != '\0') {
+        p_index++;
+    }
+    if (pattern[p_index] != '\0' && p_index != plen) {
+        // there were still non-lowercase chars left in the pattern string after command string terminated
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+
 /**
  * Compare two strings, one be longer but may contains only numbers in that section
  * @param str1
@@ -487,10 +544,8 @@ scpi_bool_t matchPattern(const char * pattern, size_t pattern_len, const char * 
                 compareStrAndNum(pattern, pattern_sep_pos_short, str, str_len, num);
     } else {
 
-        pattern_sep_pos_short = patternSeparatorShortPos(pattern, pattern_len);
-
         return compareStr(pattern, pattern_len, str, str_len) ||
-                compareStr(pattern, pattern_sep_pos_short, str, str_len);
+        compareShortPatternToCommand(pattern, pattern_len, str, str_len);
     }
 }
 
