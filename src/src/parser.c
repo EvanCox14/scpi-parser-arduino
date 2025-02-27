@@ -247,7 +247,7 @@ scpi_bool_t SCPI_Parse(scpi_t * context, char * data, int len) {
     }
 
     /* conditionally write new line */
-    writeNewLine(context);
+    //writeNewLine(context);
 
     return result;
 }
